@@ -17,7 +17,8 @@ try {
 } catch (error) {
     console.log(error)
     res.status(httpStatus.BAD_REQUEST).json({
-        message:`something went wrong ${error}`
+        message:`something went wrong ${error}`,
+        error
     })
 }
 }
