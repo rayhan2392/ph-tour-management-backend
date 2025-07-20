@@ -6,6 +6,7 @@ import { sendResponse } from "../../utils/sendResponse"
 import { authServices } from './auth.service';
 import { setAuthCookie } from '../../utils/setCookie';
 import AppError from '../../errorHelpers/AppError';
+import { JwtPayload } from 'jsonwebtoken';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const credentialLogin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -68,9 +69,26 @@ const logout = catchAsync(async (req: Request, res: Response, next: NextFunction
 
 })
 
+const resetPassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+
+  const newPassword = req.body.newPassword
+  const oldPassword = req.body.oldPassword
+  const decodedToken = req.user
+
+  await authServices.resetPassword(oldPassword,newPassword,decodedToken as JwtPayload)
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Password changed successfully!!',
+    data: null
+  })
+
+})
 
 export const authControllers = {
   credentialLogin,
   getNewAccessToken,
-  logout
+  logout,
+  resetPassword
 }
