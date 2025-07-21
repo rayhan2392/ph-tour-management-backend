@@ -7,6 +7,8 @@ import { authServices } from './auth.service';
 import { setAuthCookie } from '../../utils/setCookie';
 import AppError from '../../errorHelpers/AppError';
 import { JwtPayload } from 'jsonwebtoken';
+import { createUserTokens } from '../../utils/userTokens';
+import { envVars } from '../../config/env';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const credentialLogin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -33,9 +35,9 @@ const getNewAccessToken = catchAsync(async (req: Request, res: Response, next: N
   if (!refreshToken) {
     throw new AppError(httpStatus.BAD_REQUEST, "No refresh token recieved from cookies")
   }
-   
+
   const tokenInfo = await authServices.getNewAccessToken(refreshToken as string)
-  
+
 
   sendResponse(res, {
     success: true,
@@ -48,16 +50,16 @@ const getNewAccessToken = catchAsync(async (req: Request, res: Response, next: N
 
 const logout = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
 
-  res.clearCookie('accessToken',{
-    httpOnly:true,
-    secure:false,
-    sameSite:'lax'
+  res.clearCookie('accessToken', {
+    httpOnly: true,
+    secure: false,
+    sameSite: 'lax'
   })
 
-  res.clearCookie('refreshToken',{
-    httpOnly:true,
-    secure:false,
-    sameSite:'lax'
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: false,
+    sameSite: 'lax'
   })
 
   sendResponse(res, {
@@ -75,7 +77,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response, next: NextF
   const oldPassword = req.body.oldPassword
   const decodedToken = req.user
 
-  await authServices.resetPassword(oldPassword,newPassword,decodedToken as JwtPayload)
+  await authServices.resetPassword(oldPassword, newPassword, decodedToken as JwtPayload)
 
   sendResponse(res, {
     success: true,
@@ -86,9 +88,35 @@ const resetPassword = catchAsync(async (req: Request, res: Response, next: NextF
 
 })
 
+
+const googleCallbackController = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+
+  let redirectTo = req.query.state ? req.query.state as string : ""
+
+  if (redirectTo.startsWith("/")) {
+    redirectTo = redirectTo.slice(1)
+  }
+
+  // /booking => booking , => "/" => ""
+  const user = req.user;
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User Not Found")
+  }
+
+  const tokenInfo = createUserTokens(user)
+
+  setAuthCookie(res, tokenInfo)
+
+
+
+  res.redirect(`${envVars.FRONTEND_URL}/${redirectTo}`)
+})
+
 export const authControllers = {
   credentialLogin,
   getNewAccessToken,
   logout,
-  resetPassword
+  resetPassword,
+  googleCallbackController
 }
