@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import httpStatus from 'http-status-codes';
 import { NextFunction, Request, Response } from "express"
@@ -9,24 +10,63 @@ import AppError from '../../errorHelpers/AppError';
 import { JwtPayload } from 'jsonwebtoken';
 import { createUserTokens } from '../../utils/userTokens';
 import { envVars } from '../../config/env';
+import passport from 'passport';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
+//credential authentication, mannual process
+// const credentialLogin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+
+//   const loginIngo = await authServices.credentialLogin(req.body)
+
+//   setAuthCookie(res, loginIngo)
+
+//   sendResponse(res, {
+//     success: true,
+//     statusCode: httpStatus.OK,
+//     message: 'Login successfull!!',
+//     data: loginIngo
+//   })
+
+// })
+
+//credential authentication with passport.js
 const credentialLogin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
 
-  const loginIngo = await authServices.credentialLogin(req.body)
+ 
+  passport.authenticate('local', async (err: any, user: any, info: any) => {
+    if (err) {
+      return next(new AppError(401, err))
+    }
 
-  setAuthCookie(res, loginIngo)
 
-  sendResponse(res, {
+    if (!user) {
+      return next(new AppError(401, info.message))
+    }
+
+    const userTokens = await createUserTokens(user)
+    const { password: pass, ...rest } = user.toObject()
+
+    setAuthCookie(res, userTokens)
+
+    sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: 'Login successfull!!',
-    data: loginIngo
+    data: {
+      accessToken: userTokens.accessToken,
+      refreshToken: userTokens.refreshToken,
+      user: rest
+
+    }
   })
 
+  })(req,res,next)
+
+
+
+  
+
 })
-
-
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getNewAccessToken = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
