@@ -1,4 +1,4 @@
-import { model, Schema} from "mongoose";
+import { model, Schema } from "mongoose";
 import { ITour, ITourType } from "./tour.interface";
 
 const tourTypeSchema = new Schema<ITourType>({
@@ -24,17 +24,55 @@ const tourSchema = new Schema<ITour>({
     tourPlan: { type: [String], default: [] },
     maxGuest: { type: Number },
     minAge: { type: Number },
-    division:{
-        type:Schema.Types.ObjectId,
-        required:true,
-        ref:"Division"
+    division: {
+        type: Schema.Types.ObjectId,
+        required: true,
+        ref: "Division"
     },
-    tourType:{
-        type:Schema.Types.ObjectId,
-        required:true,
-        ref:"TourType"
+    tourType: {
+        type: Schema.Types.ObjectId,
+        required: true,
+        ref: "TourType"
     }
 
-}, {})
+}, { timestamps: true })
 
-export const Tour = model<ITour>("Tour",tourSchema)
+
+tourSchema.pre("save", async function (next) {
+
+    if (this.isModified("title")) {
+        const baseSlug = this.title.toLowerCase().split(" ").join("-")
+        let slug = `${baseSlug}`
+
+        let counter = 0;
+        while (await Tour.exists({ slug })) {
+            slug = `${slug}-${counter++}` // dhaka-division-2
+        }
+
+        this.slug = slug;
+    }
+    next()
+})
+
+tourSchema.pre("findOneAndUpdate", async function (next) {
+    const tour = this.getUpdate() as Partial<ITour>
+
+    if (tour.title) {
+        const baseSlug = tour.title.toLowerCase().split(" ").join("-")
+        let slug = `${baseSlug}`
+
+
+        let counter = 0;
+        while (await Tour.exists({ slug })) {
+            slug = `${slug}-${counter++}` // dhaka-division-2
+        }
+
+        tour.slug = slug
+    }
+
+    this.setUpdate(tour)
+
+    next()
+})
+
+export const Tour = model<ITour>("Tour", tourSchema)

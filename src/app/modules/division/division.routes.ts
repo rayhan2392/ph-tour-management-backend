@@ -9,4 +9,4 @@ router.get("/:slug",divisionControllers.getSingleDivision)
 router.patch("/:id",divisionControllers.updateDivision)
 router.delete("/:id",divisionControllers.deleteDivision)
 
-export const divisionRoutes = router;
+export const DivisionRoutes = router;
