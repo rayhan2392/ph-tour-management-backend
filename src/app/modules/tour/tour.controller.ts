@@ -3,6 +3,41 @@ import { catchAsync } from "../../utils/catchAsync";
 import { tourServices } from "./tour.service";
 import { sendResponse } from "../../utils/sendResponse";
 
+//tour functions
+const createTour = catchAsync(async (req: Request, res: Response) => {
+    const result = await tourServices.createTour(req.body);
+    sendResponse(res, {
+        statusCode: 201,
+        success: true,
+        message: 'Tour created successfully',
+        data: result,
+    });
+});
+
+const updateTour = catchAsync(async (req: Request, res: Response) => {
+
+    const result = await tourServices.updateTour(req.params.id, req.body);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Tour updated successfully',
+        data: result,
+    });
+});
+
+const deleteTour = catchAsync(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const result = await tourServices.deleteTour(id);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: 'Tour deleted successfully',
+        data: result,
+    });
+});
+
+
+//tour type functions
 const createTourType = catchAsync(async (req: Request, res: Response) => {
     const payload = req.body;
     const result = await tourServices.createTourType(payload);
@@ -51,6 +86,9 @@ const updateTourType = catchAsync(async (req: Request, res: Response) => {
 
 
 export const tourControllers = {
+    createTour,
+    updateTour,
+    deleteTour,
     createTourType,
     getAllTourTypes,
     updateTourType,
