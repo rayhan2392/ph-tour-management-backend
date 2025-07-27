@@ -5,6 +5,8 @@ import httpStatus from "http-status-codes"
 import bcrypt from 'bcrypt'
 import { JwtPayload } from "jsonwebtoken";
 import { envVars } from "../../config/env";
+import { QueryBuilder } from "../../utils/QueryBuilder";
+import { userSearchableFields } from "./user.constants";
 
 
 //create a user
@@ -34,50 +36,72 @@ const createUser = async (payload: Partial<IUser>) => {
 }
 
 //get all users
-const getAllUsers = async () => {
-  const users = await User.find({})
-  const totalUser = await User.countDocuments()
+const getAllUsers = async (query: Record<string, string>) => {
+
+
+
+  const queryBuilder = new QueryBuilder(User.find(), query)
+
+  const usersData = queryBuilder
+        .filter()
+        .search(userSearchableFields)
+        .sort()
+        .fields()
+        .paginate();
+
+  const [data, meta] = await Promise.all([
+    usersData.build(),
+    queryBuilder.getMeta()
+  ])
+
   return {
-    data: users,
-    meta: {
-      total: totalUser
-    }
+    data: data,
+    meta: meta
+
   }
 }
 
-//update a user
-const updateUser = async (userId: string, payload: Partial<IUser>, decodedToken: JwtPayload) => {
-  const isUserExist = await User.findById(userId);
-
-  if (!isUserExist) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found')
-  }
-  //prevent user and guide to update their role
-  if (payload.role) {
-    if (decodedToken.role === Role.USER || decodedToken.role === Role.GUIDE) {
-      throw new AppError(httpStatus.FORBIDDEN, 'You are not authorized')
+const getSingleUser = async (id: string) => {
+    const user = await User.findById(id);
+    return {
+        data: user
     }
-    if (payload.role === Role.SUPER_ADMIN && decodedToken.role === Role.ADMIN)
-      throw new AppError(httpStatus.FORBIDDEN, 'You are not authorized')
-  }
-  //prevent user and guide to update their status
-  if (payload.isActive || payload.isDeleted || payload.isVerified) {
-    if (decodedToken.role === Role.USER || decodedToken.role === Role.GUIDE) {
-      throw new AppError(httpStatus.FORBIDDEN, "You are not authorized");
+};
+
+  //update a user
+  const updateUser = async (userId: string, payload: Partial<IUser>, decodedToken: JwtPayload) => {
+    const isUserExist = await User.findById(userId);
+
+    if (!isUserExist) {
+      throw new AppError(httpStatus.NOT_FOUND, 'User not found')
     }
+    //prevent user and guide to update their role
+    if (payload.role) {
+      if (decodedToken.role === Role.USER || decodedToken.role === Role.GUIDE) {
+        throw new AppError(httpStatus.FORBIDDEN, 'You are not authorized')
+      }
+      if (payload.role === Role.SUPER_ADMIN && decodedToken.role === Role.ADMIN)
+        throw new AppError(httpStatus.FORBIDDEN, 'You are not authorized')
+    }
+    //prevent user and guide to update their status
+    if (payload.isActive || payload.isDeleted || payload.isVerified) {
+      if (decodedToken.role === Role.USER || decodedToken.role === Role.GUIDE) {
+        throw new AppError(httpStatus.FORBIDDEN, "You are not authorized");
+      }
+    }
+
+    if (payload.password) {
+      payload.password = await bcrypt.hash(payload.password, envVars.BCRYPT_SALT_ROUND)
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, payload, { new: true, runValidators: true })
+
+    return updatedUser;
   }
 
-  if (payload.password) {
-    payload.password = await bcrypt.hash(payload.password, envVars.BCRYPT_SALT_ROUND)
+  export const userServices = {
+    createUser,
+    getAllUsers,
+    updateUser,
+    getSingleUser
   }
-
-  const updatedUser = await User.findByIdAndUpdate(userId, payload, { new: true, runValidators: true })
-
-  return updatedUser;
-}
-
-export const userServices = {
-  createUser,
-  getAllUsers,
-  updateUser
-}
