@@ -14,10 +14,12 @@ const storage = new CloudinaryStorage({
                 .replace(/\./g, "-")
                 // eslint-disable-next-line no-useless-escape
                 .replace(/[^a-z0-9\-\.]/g, "") // non alpha numeric - !@#$
+                console.log(fileName)
 
             const extension = file.originalname.split(".").pop()
 
             const uniqueFileName = Math.random().toString(36).substring(2) + "-" + Date.now() + "-" + fileName + "." + extension
+            
 
             return uniqueFileName
         }
