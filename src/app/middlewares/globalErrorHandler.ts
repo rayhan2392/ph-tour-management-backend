@@ -16,7 +16,7 @@ export const globalErrorHandler = async (err: any, req: Request, res: Response, 
         console.log(err);
     }
     //delete image from cloudinary
-    console.log(req.file)
+
 
     if (req.file) {
         await deleteImageFromCloudinary(req.file.path)

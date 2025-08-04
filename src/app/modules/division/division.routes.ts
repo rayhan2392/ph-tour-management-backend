@@ -18,7 +18,7 @@ router.post("/create",
 router.get("/", divisionControllers.getAllDivisions)
 router.get("/:slug", divisionControllers.getSingleDivision)
 router.patch("/update/:id",
-    checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+    // checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
      multerUpload.single("file"),
     validateRequest(updateDivisionZodSchema),
     divisionControllers.updateDivision)
