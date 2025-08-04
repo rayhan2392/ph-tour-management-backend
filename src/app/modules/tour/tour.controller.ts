@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
 import { tourServices } from "./tour.service";
 import { sendResponse } from "../../utils/sendResponse";
+import { ITour } from "./tour.interface";
 
 //tour functions
 
@@ -19,7 +20,13 @@ const getAllTours = catchAsync(async (req: Request, res: Response) => {
 });
 
 const createTour = catchAsync(async (req: Request, res: Response) => {
-    const result = await tourServices.createTour(req.body);
+     
+    const payload:ITour = {
+        ...req.body,
+        images:(req.files as Express.Multer.File[]).map(file=>file.path)
+    }
+
+    const result = await tourServices.createTour(payload);
     sendResponse(res, {
         statusCode: 201,
         success: true,
