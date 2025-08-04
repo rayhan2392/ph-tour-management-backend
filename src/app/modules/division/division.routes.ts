@@ -4,11 +4,13 @@ import { checkAuth } from "../../middlewares/checkAuth";
 import { Role } from "../user/user.interface";
 import { validateRequest } from "../../middlewares/validateRequest";
 import { createDivisionZodSchema } from "./division.validation";
+import { multerUpload } from "../../config/multer.config";
 
 const router = Router()
 
 router.post("/create",
-    checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+    // checkAuth(Role.ADMIN, Role.SUPER_ADMIN),
+    multerUpload.single("file"),
     validateRequest(createDivisionZodSchema),
     divisionControllers.createDivision)
 
