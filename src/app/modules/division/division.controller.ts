@@ -53,13 +53,11 @@ const getSingleDivision = catchAsync(async (req: Request, res: Response) => {
 
 
 const updateDivision = catchAsync(async (req: Request, res: Response) => {
-    console.log("from header req" , req.headers)
     const id = req.params.id
     const payload:IDivision = {
         ...req.body,
         thumbnail:req.file?.path
     }
-    console.log(payload)
     const result = await divisionServices.updateDivision(id,payload)
 
     sendResponse(res, {
