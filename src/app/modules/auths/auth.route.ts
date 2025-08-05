@@ -11,7 +11,8 @@ const router = Router();
 router.post('/login', authControllers.credentialLogin)
 router.post('/refresh-token', authControllers.getNewAccessToken)
 router.post('/logout', authControllers.logout)
-router.post('/reset-password', checkAuth(...Object.values(Role)), authControllers.resetPassword)
+router.post('/change-password', checkAuth(...Object.values(Role)), authControllers.changePassword)
+router.post('/set-password', checkAuth(...Object.values(Role)), authControllers.setPassword)
 
 //google oauth routes
 router.get("/google", async (req: Request, res: Response, next: NextFunction) => {
