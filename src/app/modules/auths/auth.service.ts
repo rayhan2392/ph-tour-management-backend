@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { JwtPayload } from 'jsonwebtoken';
 import AppError from "../../errorHelpers/AppError";
@@ -89,7 +90,7 @@ const setPassword = async (userId: string, plainPassword: string) => {
 }
 
 const forgotPassword = async (email: string) => {
-    
+
     const isUserExist = await User.findOne({ email })
 
     if (!isUserExist) {
@@ -110,13 +111,13 @@ const forgotPassword = async (email: string) => {
         email: isUserExist.email,
         role: isUserExist.role
     }
-   const resetToken = jwt.sign(jwtPayload, envVars.JWT_ACCESS_SECRET, {
+    const resetToken = jwt.sign(jwtPayload, envVars.JWT_ACCESS_SECRET, {
         expiresIn: "10m"
     })
 
-     const resetUILink = `${envVars.FRONTEND_URL}/reset-password?id=${isUserExist._id}&token=${resetToken}`
+    const resetUILink = `${envVars.FRONTEND_URL}/reset-password?id=${isUserExist._id}&token=${resetToken}`
 
-     sendEmail({
+    sendEmail({
         to: isUserExist.email,
         subject: "Password Reset",
         templateName: "forgetPassword",
@@ -127,11 +128,32 @@ const forgotPassword = async (email: string) => {
     })
 }
 
+const resetPassword = async (payload: Record<string, any>, decodedToken: JwtPayload) => {
+
+    if (payload.id != decodedToken.userId) {
+        throw new AppError(401, "You can not reset your password")
+    }
+
+    const isUserExist = await User.findById(decodedToken.userId)
+    if (!isUserExist) {
+        throw new AppError(401, "User does not exist")
+    }
+
+    const hashedPassword = await bcrypt.hash(
+        payload.newPassword,
+        Number(envVars.BCRYPT_SALT_ROUND)
+    )
+
+    isUserExist.password = hashedPassword;
+
+    await isUserExist.save()
+}
 
 
 export const authServices = {
     getNewAccessToken,
     setPassword,
     changePassword,
-    forgotPassword
+    forgotPassword,
+    resetPassword
 }
