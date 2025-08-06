@@ -14,6 +14,7 @@ router.post('/refresh-token', authControllers.getNewAccessToken)
 router.post('/logout', authControllers.logout)
 router.post('/change-password', checkAuth(...Object.values(Role)), authControllers.changePassword)
 router.post('/set-password', checkAuth(...Object.values(Role)), authControllers.setPassword)
+router.post('/forgot-password',  authControllers.forgotPassword)
 
 //google oauth routes
 router.get("/google", async (req: Request, res: Response, next: NextFunction) => {
